@@ -162,20 +162,6 @@ def main():
         ("not_use_mpi_colls", "RBC-Colls"),
         ("hierarchy_aware", "HAware"),
     ]
-    # graph_list = [
-    #    "gnm-undirected",
-    #    "rgg2d",
-    #    "rgg2d-permuted",
-    #    "rgg3d",
-    #    "rgg3d-permuted",
-    # ]
-    # grouped_df = grouped_df.query("graph in @graph_list")
-    # grouped_df = grouped_df.query(
-    #    "algorithm != 'ADAPTIVE_ASYNC_SSSP' or active_req_ratio == 0.1"
-    # )
-    # grouped_df = grouped_df.query(
-    #    "algorithm != 'DENSE_DELTA_STEPPING' or (interleaved_exchange == '1' and min_requests_per_pe == '500')"
-    # ).reset_index()
     g = generate_col_plot(
         df=df,
         hue_cols=hue_cols,
