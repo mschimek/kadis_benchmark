@@ -30,7 +30,8 @@ struct Parameters {
     config_vector.emplace_back("num_pe", std::to_string(num_pe));
     config_vector.emplace_back("imbalance", std::to_string(imbalance));
     config_vector.emplace_back("not_use_dma", std::to_string(not_use_dma));
-    config_vector.emplace_back("not_use_mpi_colls", std::to_string(not_use_mpi_colls));
+    config_vector.emplace_back("not_use_mpi_colls",
+                               std::to_string(not_use_mpi_colls));
     config_vector.emplace_back("num_levels", std::to_string(num_levels));
     config_vector.emplace_back("iterations", std::to_string(iterations));
     config_vector.emplace_back("hiearchy_aware",
@@ -89,32 +90,34 @@ bool is_sorted(std::vector<T> const& data) {
 
 template <typename T>
 void run_sorter(std::vector<T>& data, const Parameters& params) {
-	std::mt19937_64 gen(kamping::world_rank() + 1092983);
-	MPI_Datatype my_mpi_type = kamping::mpi_datatype<T>();
-	if(!params.not_use_mpi_colls) {
-		RBC::Comm rcomm;
-		RBC::Create_Comm_from_MPI(MPI_COMM_WORLD, &rcomm, true, true, true);
-		if(kamping::world_rank() == 0) {
-    			std::cout << "use MPI-Colls: " << rcomm.useMPICollectives() << std::endl;
-		}
-		if (params.hierarchy_aware) {
-			std::vector<std::size_t> ks{kamping::world_size() / 48u, 48u};
-			Ams::sort(my_mpi_type, data, ks, gen, rcomm, std::less<T>{}, params.imbalance, !params.not_use_dma);
+  std::mt19937_64 gen(kamping::world_rank() + 1092983);
+  MPI_Datatype my_mpi_type = kamping::mpi_datatype<T>();
+  if (!params.not_use_mpi_colls) {
+    RBC::Comm rcomm;
+    RBC::Create_Comm_from_MPI(MPI_COMM_WORLD, &rcomm, true, true, true);
+    if (kamping::world_rank() == 0) {
+      std::cout << "use MPI-Colls: " << rcomm.useMPICollectives() << std::endl;
+    }
+    if (params.hierarchy_aware) {
+      std::vector<std::size_t> ks{kamping::world_size() / 48u, 48u};
+      Ams::sort(my_mpi_type, data, ks, gen, rcomm, std::less<T>{},
+                params.imbalance, !params.not_use_dma);
 
-		} else {
-			Ams::sortLevel(my_mpi_type, data, params.num_levels, gen, rcomm,
-					std::less<T>{}, params.imbalance, !params.not_use_dma);
-		}
-	} else {
-		if (params.hierarchy_aware) {
-			std::vector<std::size_t> ks{kamping::world_size() / 48u, 48u};
-			Ams::sort(my_mpi_type, data, ks, gen, MPI_COMM_WORLD, std::less<T>{}, params.imbalance, !params.not_use_dma);
+    } else {
+      Ams::sortLevel(my_mpi_type, data, params.num_levels, gen, rcomm,
+                     std::less<T>{}, params.imbalance, !params.not_use_dma);
+    }
+  } else {
+    if (params.hierarchy_aware) {
+      std::vector<std::size_t> ks{kamping::world_size() / 48u, 48u};
+      Ams::sort(my_mpi_type, data, ks, gen, MPI_COMM_WORLD, std::less<T>{},
+                params.imbalance, !params.not_use_dma);
 
-		} else {
-			Ams::sortLevel(my_mpi_type, data, params.num_levels, gen, MPI_COMM_WORLD,
-					std::less<T>{}, params.imbalance, !params.not_use_dma);
-		}
-	}
+    } else {
+      Ams::sortLevel(my_mpi_type, data, params.num_levels, gen, MPI_COMM_WORLD,
+                     std::less<T>{}, params.imbalance, !params.not_use_dma);
+    }
+  }
 }
 
 inline void print_as_jsonlist_to_file(std::vector<std::string> objects,
@@ -141,8 +144,8 @@ int main(int argc, char const** argv) {
   std::vector<std::string> counter_output;
 
   for (std::size_t it = 0; it < params.iterations; ++it) {
-	  measurements::timer().clear();
-	  measurements::counter().clear();
+    measurements::timer().clear();
+    measurements::counter().clear();
     measurements::timer().synchronize_and_start("gen_data");
     auto data = gen_data(params.datasize);
     measurements::timer().stop();
@@ -155,7 +158,8 @@ int main(int argc, char const** argv) {
     const auto cur_sum = sum(data);
     const bool sorted = is_sorted(data);
     if (comm.is_root()) {
-      std::cout << "is sorted: " << sorted << "and same sum: " << (cur_sum == prev_sum) << std::endl;
+      std::cout << "is sorted: " << sorted
+                << " and same sum: " << (cur_sum == prev_sum) << std::endl;
     }
 
     std::stringstream sstream_counter;
